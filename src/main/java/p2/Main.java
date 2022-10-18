@@ -21,6 +21,7 @@ public class Main {
     // Create a configuration object for the job
     JobConf jobConf = new JobConf(p2.Main.class);
 
+    // Config to run locally
     jobConf.set("fs.defaultFS", "local");
     jobConf.set("mapreduce.job.maps", "1");
     jobConf.set("mapreduce.job.reduces", "1");
@@ -43,6 +44,7 @@ public class Main {
     // Set input and output directories using command line arguments,
     // arg[0] = name of input directory on HDFS, and arg[1] =  name of output directory to be created to store the output file.
 
+    // File config to run locally
     Configuration c = new Configuration();
     String[] files = new GenericOptionsParser(c, args).getRemainingArgs();
     FileInputFormat.setInputPaths(jobConf, new Path(files[0]));
@@ -70,89 +72,94 @@ class CountryMapper extends MapReduceBase implements Mapper<LongWritable, Text, 
     float price = Float.parseFloat(rowData[2].trim());
     String newValue = country + "-" + card + "-" + price;
 
-    outputCollector.collect(value, new Text(newValue));
+    outputCollector.collect(new Text(country), new Text(newValue));
   }
 }
 
 class CustomReducer extends MapReduceBase implements Reducer<Text, Text, Text, Text> {
-  static class CountryCardPrice {
-    private final String country;
-    private final String card;
-    private final float price;
-
-    public CountryCardPrice(String country, String card, float price) {
-      this.country = country;
-      this.card = card;
-      this.price = price;
-    }
-
-    public String getCountry() {
-      return country;
-    }
-
-    public String getCard() {
-      return card;
-    }
-
-    public float getPrice() {
-      return price;
-    }
-  }
+  List<String> readCountries = new ArrayList<>();
 
   @Override
   public void reduce(Text key, Iterator<Text> iterator, OutputCollector<Text, Text> outputCollector, Reporter reporter) throws IOException {
-    String[] compoundKey = key.toString().split("-");
-    String countryKey = compoundKey[0];
-    List<CountryCardPrice> elements = new ArrayList<>();
+    String countryKey = key.toString();
 
-    // Convert iterator to a list
-    while (iterator.hasNext()) {
-      Object value = iterator.next();
-      String[] current = value.toString().split("-");
-      String currentCountry = current[0];
-      String currentCard = current[1];
-      float currentPrice = Float.parseFloat(current[2]);
+    if (!readCountries.contains(countryKey)) {
+      readCountries.add(countryKey);
 
-      elements.add(new CountryCardPrice(currentCountry, currentCard, currentPrice));
-    }
+      List<CountryCardPrice> elements = new ArrayList<>();
 
-    List<CountryCardPrice> elementsFromCurrentCountry = elements
-      .stream()
-      .filter(e -> {
-        String elementCountry = e.getCountry();
+      // Convert iterator to a list
+      while (iterator.hasNext()) {
+        Object value = iterator.next();
+        String[] current = value.toString().split("-");
+        String currentCountry = current[0];
+        String currentCard = current[1];
+        float currentPrice = Float.parseFloat(current[2]);
 
-        return elementCountry.equals(countryKey);
-      })
-      .collect(Collectors.toList());
-    List<String> cardsFromCurrentCountry = elementsFromCurrentCountry
-      .stream()
-      .map(CountryCardPrice::getCard)
-      .distinct()
-      .collect(Collectors.toList());
-    List<CountryCardPrice> totalSpentByCard = new ArrayList<>();
-
-    cardsFromCurrentCountry.forEach(card -> {
-      AtomicReference<Float> totalFromCurrentCard = new AtomicReference<>((float) 0);
-
-      elementsFromCurrentCountry.forEach(e -> {
-        if (e.getCard().equals(card)) totalFromCurrentCard.updateAndGet(v -> v + e.getPrice());
-      });
-      totalSpentByCard.add(new CountryCardPrice(countryKey, card, totalFromCurrentCard.get()));
-    });
-
-    float max = 0;
-    String maxCard = "";
-
-    for (CountryCardPrice e : totalSpentByCard)
-      if (e.getPrice() > max) {
-        max = e.getPrice();
-        maxCard = e.getCard();
+        elements.add(new CountryCardPrice(currentCountry, currentCard, currentPrice));
       }
 
-    // Add the current country to the list of countries to avoid collect it again
-    String newValue = maxCard + " " + max;
-    System.out.println(countryKey + " " + newValue);
+      List<CountryCardPrice> elementsFromCurrentCountry = elements
+        .stream()
+        .filter(e -> {
+          String elementCountry = e.getCountry();
 
-    outputCollector.collect(new Text(countryKey), new Text(newValue));
+          return elementCountry.equals(countryKey);
+        })
+        .collect(Collectors.toList());
+      List<String> cardsFromCurrentCountry = elementsFromCurrentCountry
+        .stream()
+        .map(CountryCardPrice::getCard)
+        .distinct()
+        .collect(Collectors.toList());
+      List<CountryCardPrice> totalSpentByCard = new ArrayList<>();
+
+      cardsFromCurrentCountry.forEach(card -> {
+        AtomicReference<Float> totalFromCurrentCard = new AtomicReference<>((float) 0);
+
+        elementsFromCurrentCountry.forEach(e -> {
+          if (e.getCard().equals(card)) totalFromCurrentCard.updateAndGet(v -> v + e.getPrice());
+        });
+        totalSpentByCard.add(new CountryCardPrice(countryKey, card, totalFromCurrentCard.get()));
+      });
+
+      float max = 0;
+      String maxCard = "";
+
+      for (CountryCardPrice e : totalSpentByCard)
+        if (e.getPrice() > max) {
+          max = e.getPrice();
+          maxCard = e.getCard();
+        }
+
+      // Add the current country to the list of countries to avoid collect it again
+      String newValue = maxCard + " " + max;
+
+      outputCollector.collect(new Text(countryKey), new Text(newValue));
+    }
+  }
+}
+
+class CountryCardPrice {
+  private final String country;
+  private final String card;
+  private final float price;
+
+  public CountryCardPrice(String country, String card, float price) {
+    this.country = country;
+    this.card = card;
+    this.price = price;
+  }
+
+  public String getCountry() {
+    return country;
+  }
+
+  public String getCard() {
+    return card;
+  }
+
+  public float getPrice() {
+    return price;
   }
 }
