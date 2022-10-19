@@ -1,4 +1,4 @@
-package p11;
+package p12;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -67,31 +67,34 @@ class CustomMapper extends MapReduceBase implements Mapper<LongWritable, Text, T
         String valueString = value.toString();
         String[] rowData = valueString.split(",");
         String name = rowData[4].trim().toLowerCase();
-        String country = rowData[7].trim().toLowerCase();
+        String card = rowData[3].trim().toLowerCase();
         String price = rowData[2].trim();
 
-        outputCollector.collect(new Text(name + "/" + country), new Text(price));
+        outputCollector.collect(new Text(name), new Text(price + "/" + card));
     }
 }
 
 class CustomReducer extends MapReduceBase implements Reducer<Text, Text, Text, Text> {
     @Override
     public void reduce(Text key, Iterator<Text> iterator, OutputCollector<Text, Text> outputCollector, Reporter reporter) throws IOException {
-        String[] compoundKey = key.toString().split("/");
-        String nameKey = compoundKey[0];
-        String countryKey = compoundKey[1];
+        String nameKey = key.toString();
 
-        if (nameKey.startsWith("j") && countryKey.endsWith("s")) {
-            int pricesQuantity = 0;
-            float sumPrices = 0;
+        if (nameKey.startsWith("a") || nameKey.startsWith("b")) {
+            float maxPrice = Float.MIN_VALUE;
+            String maxCard = "";
             // Convert iterator to a list
             while (iterator.hasNext()) {
-                float currentPrice = Float.parseFloat(iterator.next().toString());
-                sumPrices += currentPrice;
-                pricesQuantity++;
+                String value = iterator.next().toString();
+                String[] compoundValue = value.split("/");
+                float currentPrice = Float.parseFloat(compoundValue[0]);
+                String currentCard = compoundValue[1];
+                if (currentPrice > maxPrice) {
+                    maxPrice = currentPrice;
+                    maxCard = currentCard;
+                }
             }
 
-            outputCollector.collect(new Text(key), new Text(Float.toString(sumPrices / pricesQuantity)));
+            outputCollector.collect(new Text(key), new Text(maxCard + " - " + maxPrice));
         }
     }
 }
