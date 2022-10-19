@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-// Encontrar el nombre y ciudad de las personas que compraron el producto más caro por país
+// Encontrar el nombre, ciudad y estado de las personas que compraron el producto más caro por país
 public class Main {
   public static void main(String[] args) throws IOException {
     JobClient jobClient = new JobClient();
@@ -71,10 +71,11 @@ class CountryMapper extends MapReduceBase implements Mapper<LongWritable, Text, 
     String[] rowData = valueString.split(",");
     String name = rowData[4].trim().toLowerCase();
     String country = rowData[7].trim().toLowerCase();
+    String state = rowData[5].trim().toLowerCase();
     String city = rowData[5].trim().toLowerCase();
     String price = rowData[2].trim().toLowerCase();
 
-    String newKeyAndValue = name + "/" + country + "/" + city + "/" + price;
+    String newKeyAndValue = name + "/" + country + "/" + state + "/" + city + "/" + price;
 
     outputCollector.collect(new Text(newKeyAndValue), new Text(newKeyAndValue));
   }
@@ -92,9 +93,9 @@ class CustomReducer extends MapReduceBase implements Reducer<Text, Text, Text, T
       readCountry.add(countryKey);
 
       String name = compoundKey[0];
-      String city = compoundKey[2];
-      float price = Float.parseFloat(compoundKey[3]);
-      System.out.println("{ name: " + name + ", city: " + city + ", price: " + price + " }");
+      String state = compoundKey[2];
+      String city = compoundKey[3];
+      float price = Float.parseFloat(compoundKey[4]);
 
       // Convert iterator to a list
       while (iterator.hasNext()) {
@@ -102,19 +103,19 @@ class CustomReducer extends MapReduceBase implements Reducer<Text, Text, Text, T
         String[] current = value.toString().split("/");
         String currentName = current[0];
         String currentCountry = current[1];
-        String currentCity = compoundKey[2];
-        float currentPrice = Float.parseFloat(compoundKey[3]);
+        String currentState = current[2];
+        String currentCity = current[3];
+        float currentPrice = Float.parseFloat(current[4]);
 
         if (countryKey.equals(currentCountry) && currentPrice > price) {
           name = currentName;
           city = currentCity;
           price = currentPrice;
+          state = currentState;
         }
       }
 
-      System.out.println(name + " " + city);
-
-      outputCollector.collect(new Text(name), new Text(city));
+      outputCollector.collect(new Text(name), new Text(state + " " + city));
     }
   }
 }
