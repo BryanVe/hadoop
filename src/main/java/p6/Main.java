@@ -1,5 +1,6 @@
 package p6;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -41,15 +42,17 @@ public class Main {
     jobConf.setInputFormat(TextInputFormat.class);
     jobConf.setOutputFormat(TextOutputFormat.class);
 
-    // Set input and output directories using command line arguments,
-    // arg[0] = name of input directory on HDFS, and arg[1] =  name of output directory to be created to store the output file.
-
-    // File config to run locally
-    Configuration c = new Configuration();
-    String[] files = new GenericOptionsParser(c, args).getRemainingArgs();
-    System.out.println(Arrays.toString(files));
-    FileInputFormat.setInputPaths(jobConf, new Path(files[0]));
-    FileOutputFormat.setOutputPath(jobConf, new Path(files[1]));
+    if (Dotenv.load().get("HADOOP_ENV").equals("local")) {
+      Configuration c = new Configuration();
+      String[] files = new GenericOptionsParser(c, args).getRemainingArgs();
+      System.out.println(Arrays.toString(files));
+      FileInputFormat.setInputPaths(jobConf, new Path(files[0]));
+      FileOutputFormat.setOutputPath(jobConf, new Path(files[1]));
+    } else {
+      System.out.println(Arrays.toString(args));
+      FileInputFormat.setInputPaths(jobConf, new Path(args[1]));
+      FileOutputFormat.setOutputPath(jobConf, new Path(args[2]));
+    }
 
     jobClient.setConf(jobConf);
     try {
