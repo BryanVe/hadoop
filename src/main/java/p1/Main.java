@@ -1,5 +1,6 @@
 package p1;
 
+import files.Folder;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -13,6 +14,8 @@ import java.util.Arrays;
 
 public class Main {
     public static void main(String[] args) throws IOException {
+        Folder.deleteFolder(System.getProperty("user.dir") + "/HDFS/output");
+
         JobClient jobClient = new JobClient();
 
         // Create a configuration object for the job
@@ -41,11 +44,15 @@ public class Main {
         if (Dotenv.load().get("HADOOP_ENV").equals("local")) {
             Configuration c = new Configuration();
             String[] files = new GenericOptionsParser(c, args).getRemainingArgs();
-            System.out.println(Arrays.toString(files));
+
+            System.out.println("Input: " + files[0]);
+            System.out.println("Output: " + files[1]);
+
             FileInputFormat.setInputPaths(jobConf, new Path(files[0]));
             FileOutputFormat.setOutputPath(jobConf, new Path(files[1]));
         } else {
-            System.out.println(Arrays.toString(args));
+            System.out.println("Args: " + Arrays.toString(args));
+
             FileInputFormat.setInputPaths(jobConf, new Path(args[1]));
             FileOutputFormat.setOutputPath(jobConf, new Path(args[2]));
         }
