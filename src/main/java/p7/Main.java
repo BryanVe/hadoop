@@ -1,19 +1,20 @@
 package p7;
 
+import files.Folder;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Iterator;
 
 public class Main {
   public static void main(String[] args) throws IOException {
+    Folder.deleteFolder(System.getProperty("user.dir") + "/HDFS/output");
+
     JobClient jobClient = new JobClient();
 
     // Create a configuration object for the job
@@ -42,11 +43,15 @@ public class Main {
     if (Dotenv.load().get("HADOOP_ENV").equals("local")) {
       Configuration c = new Configuration();
       String[] files = new GenericOptionsParser(c, args).getRemainingArgs();
-      System.out.println(Arrays.toString(files));
+
+      System.out.println("Input: " + files[0]);
+      System.out.println("Output: " + files[1]);
+
       FileInputFormat.setInputPaths(jobConf, new Path(files[0]));
       FileOutputFormat.setOutputPath(jobConf, new Path(files[1]));
     } else {
-      System.out.println(Arrays.toString(args));
+      System.out.println("Args: " + Arrays.toString(args));
+
       FileInputFormat.setInputPaths(jobConf, new Path(args[1]));
       FileOutputFormat.setOutputPath(jobConf, new Path(args[2]));
     }
@@ -61,42 +66,4 @@ public class Main {
   }
 }
 
-class CustomMapper extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
-
-  public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
-    if (key.get() == 0) {
-      return;
-    }
-    String valueString = value.toString();
-    String[] singleRowData = valueString.split(",");
-    output.collect(new Text(singleRowData[7].trim() + ',' + singleRowData[5].trim()),
-            new Text(singleRowData[10] + ',' + singleRowData[11]));
-  }
-}
-
-
-class CustomReducer extends MapReduceBase implements Reducer<Text, Text, Text, Text> {
-
-  public void reduce(Text t_key, Iterator<Text> values, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
-    double averageLat = 0.0;
-    double averageLng = 0.0;
-    int i = 0;
-    while (values.hasNext()) {
-      // replace type of value with the actual type of our value
-      String[] vals = values.next().toString().split(",");
-
-      double lat = Double.parseDouble(vals[0]);
-      double lng = Double.parseDouble(vals[1]);
-
-      averageLat += lat;
-      averageLng += lng;
-      i++;
-    }
-    averageLat = averageLat / i;
-    averageLng = averageLng / i;
-
-    output.collect(t_key,
-            new Text("avgLat: " + averageLat + ", avgLng: " + averageLng));
-  }
-}
 
