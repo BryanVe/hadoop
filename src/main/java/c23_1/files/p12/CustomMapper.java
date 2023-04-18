@@ -1,4 +1,4 @@
-package c23_1.files.p10;
+package c23_1.files.p12;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
