@@ -8,15 +8,9 @@ import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 class CustomReducer extends MapReduceBase implements Reducer<Text, Text, Text, Text> {
   LocalDateTime now = LocalDateTime.now();
@@ -35,7 +29,6 @@ class CustomReducer extends MapReduceBase implements Reducer<Text, Text, Text, T
       String accountCreated = data[1];
       String accountCreatedUTC = Utils.getUTCDateAsString(accountCreated);
       LocalDateTime parsedAccountCreated = LocalDateTime.parse(accountCreatedUTC);
-      System.out.println(accountCreated);
 
       int currentAntiquity = Math.abs((int) ChronoUnit.DAYS.between(now, parsedAccountCreated));
 

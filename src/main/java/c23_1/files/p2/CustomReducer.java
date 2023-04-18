@@ -9,8 +9,6 @@ import org.apache.hadoop.mapred.Reporter;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 class CustomReducer extends MapReduceBase implements Reducer<Text, Text, Text, FloatWritable> {
   @Override
