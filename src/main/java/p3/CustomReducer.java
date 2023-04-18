@@ -44,11 +44,13 @@ class CustomReducer extends MapReduceBase implements Reducer<Text, Text, Text, T
           return elementName.equals(nameKey);
         })
         .collect(Collectors.toList());
+
       List<String> countriesFromCurrentPerson = elementsFromCurrentPerson
         .stream()
         .map(NameCountryPrice::getCountry)
         .distinct()
         .collect(Collectors.toList());
+
       List<NameCountryPrice> totalSpentByPerson = new ArrayList<>();
 
       countriesFromCurrentPerson.forEach(country -> {
