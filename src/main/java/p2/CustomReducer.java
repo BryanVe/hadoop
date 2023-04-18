@@ -36,19 +36,16 @@ class CustomReducer extends MapReduceBase implements Reducer<Text, Text, Text, T
         elements.add(new CountryCardPrice(currentCountry, currentCard, currentPrice));
       }
 
-      List<CountryCardPrice> elementsFromCurrentCountry = elements
-        .stream()
-        .filter(e -> {
-          String elementCountry = e.getCountry();
+      List<CountryCardPrice> elementsFromCurrentCountry = elements.stream().filter(e ->
+              e.getCountry().equals(countryKey))
+              .collect(Collectors.toList());
 
-          return elementCountry.equals(countryKey);
-        })
-        .collect(Collectors.toList());
       List<String> cardsFromCurrentCountry = elementsFromCurrentCountry
         .stream()
         .map(CountryCardPrice::getCard)
         .distinct()
         .collect(Collectors.toList());
+
       List<CountryCardPrice> totalSpentByCard = new ArrayList<>();
 
       cardsFromCurrentCountry.forEach(card -> {
@@ -57,6 +54,7 @@ class CustomReducer extends MapReduceBase implements Reducer<Text, Text, Text, T
         elementsFromCurrentCountry.forEach(e -> {
           if (e.getCard().equals(card)) totalFromCurrentCard.updateAndGet(v -> v + e.getPrice());
         });
+
         totalSpentByCard.add(new CountryCardPrice(countryKey, card, totalFromCurrentCard.get()));
       });
 
