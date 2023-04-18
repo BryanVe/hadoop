@@ -14,11 +14,12 @@ import java.util.Iterator;
 import java.util.Map;
 
 class CustomReducer extends MapReduceBase implements Reducer<Text, Text, Text, Text> {
-  // create map for saving frequencies of payment types
-  HashMap<String, Integer> frequencies = new HashMap<>();
 
   @Override
   public void reduce(Text key, Iterator<Text> iterator, OutputCollector<Text, Text> outputCollector, Reporter reporter) throws IOException {
+    // create map for saving frequencies of payment types
+    HashMap<String, Integer> frequencies = new HashMap<>();
+
     while (iterator.hasNext()) {
       Text value = iterator.next();
       String paymentType = value.toString();
