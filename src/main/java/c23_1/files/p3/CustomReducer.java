@@ -39,7 +39,7 @@ class CustomReducer extends MapReduceBase implements Reducer<Text, Text, Text, T
       if (entry.getValue().compareTo(maxPaymentType.getValue()) > 0) {
         maxPaymentType = entry;
       }
-      if (entry.getValue().compareTo(maxPaymentType.getValue()) < minPaymentType.getValue()) {
+      if (entry.getValue().compareTo(maxPaymentType.getValue()) > minPaymentType.getValue()) {
         minPaymentType = entry;
       }
     }
