@@ -1,4 +1,4 @@
-package p7;
+package c23_1.files.p10;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.MapReduceBase;

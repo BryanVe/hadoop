@@ -1,4 +1,4 @@
-package p8;
+package c23_1.files.p11;
 
 import files.Folder;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -11,6 +11,7 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import java.io.IOException;
 import java.util.Arrays;
 
+// Encontrar el nombre, precio y coordenadas de las personas que compraron el producto más caro por país
 public class Main {
   public static void main(String[] args) throws IOException {
     Folder.deleteFolder(System.getProperty("user.dir") + "/HDFS/output");
@@ -33,7 +34,7 @@ public class Main {
     jobConf.setOutputValueClass(Text.class);
 
     // Specify names of Mapper and Reducer Class
-    jobConf.setMapperClass(CustomMapper.class);
+    jobConf.setMapperClass(CountryMapper.class);
     jobConf.setReducerClass(CustomReducer.class);
 
     // Specify formats of the data type of input and output
@@ -65,5 +66,3 @@ public class Main {
     }
   }
 }
-
-
