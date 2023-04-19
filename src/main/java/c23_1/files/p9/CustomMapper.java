@@ -9,9 +9,21 @@ import org.apache.hadoop.mapred.Reporter;
 
 import java.io.IOException;
 
-public class CustomMapper extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
+class CustomMapper extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
     @Override
-    public void map(LongWritable longWritable, Text text, OutputCollector<Text, Text> outputCollector, Reporter reporter) throws IOException {
+    public void map(LongWritable key, Text value, OutputCollector<Text, Text> outputCollector, Reporter reporter) throws IOException {
+        if (key.get() == 0 || value.toString().contains("Transaction_date")) return;
 
+        String valueString = value.toString();
+        String[] rowData = valueString.split(",");
+        String name = rowData[4].trim().toLowerCase();
+        String country = rowData[7].trim().toLowerCase();
+        String latitude = rowData[10].trim();
+        String longitude = rowData[11].trim();
+
+        Text newKey = new Text(country);
+        Text newValue = new Text(name + "/" + latitude + "/" + longitude);
+
+        outputCollector.collect(newKey, newValue);
     }
 }
